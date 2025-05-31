@@ -1,0 +1,108 @@
+from django.db import models
+
+class Conflict(models.Model):
+    conflict_id = models.IntegerField(primary_key=True)
+    location = models.CharField(max_length=255)
+    side_a = models.CharField(max_length=255)
+    side_a_id = models.IntegerField()
+    side_a_2nd = models.CharField(max_length=1024, blank=True, null=True)
+    side_b = models.CharField(max_length=1024)
+    side_b_id = models.CharField(max_length=1024)
+    side_b_2nd = models.CharField(max_length=1024, blank=True, null=True)
+    territory_name = models.CharField(max_length=255, blank=True, null=True)
+    year = models.IntegerField()
+    intensity_level = models.IntegerField()
+    cumulative_intensity = models.IntegerField()
+    type_of_conflict = models.IntegerField()
+    start_date = models.DateField(blank=True, null=True)
+    start_date2 = models.DateField(blank=True, null=True)
+    start_prec2 = models.IntegerField(blank=True, null=True)
+    ep_end = models.IntegerField(blank=True, null=True)
+    ep_end_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Conflict {self.side_a} - {self.side_b} ({self.year})"
+
+
+
+class Commodity(models.Model):
+    year = models.IntegerField(primary_key=True)
+    crude_oil_average = models.FloatField(null=True, blank=True)
+    crude_oil_brent = models.FloatField(null=True, blank=True)
+    crude_oil_dubai = models.FloatField(null=True, blank=True)
+    crude_oil_wti = models.FloatField(null=True, blank=True)
+    coal_australian = models.FloatField(null=True, blank=True)
+    coal_south_african = models.FloatField(null=True, blank=True)
+    natural_gas_us = models.FloatField(null=True, blank=True)
+    natural_gas_europe = models.FloatField(null=True, blank=True)
+    liquefied_natural_gas_japan = models.FloatField(null=True, blank=True)
+    natural_gas_index = models.FloatField(null=True, blank=True)
+    cocoa = models.FloatField(null=True, blank=True)
+    coffee_arabica = models.FloatField(null=True, blank=True)
+    coffee_robusta = models.FloatField(null=True, blank=True)
+    tea_avg_3_auctions = models.FloatField(null=True, blank=True)
+    tea_colombo = models.FloatField(null=True, blank=True)
+    tea_kolkata = models.FloatField(null=True, blank=True)
+    tea_mombasa = models.FloatField(null=True, blank=True)
+    coconut_oil = models.FloatField(null=True, blank=True)
+    groundnuts = models.FloatField(null=True, blank=True)
+    fish_meal = models.FloatField(null=True, blank=True)
+    groundnut_oil = models.FloatField(null=True, blank=True)
+    palm_oil = models.FloatField(null=True, blank=True)
+    palm_kernel_oil = models.FloatField(null=True, blank=True)
+    soybeans = models.FloatField(null=True, blank=True)
+    soybean_oil = models.FloatField(null=True, blank=True)
+    soybean_meal = models.FloatField(null=True, blank=True)
+    barley = models.FloatField(null=True, blank=True)
+    maize = models.FloatField(null=True, blank=True)
+    sorghum = models.FloatField(null=True, blank=True)
+    rice_thai_5 = models.FloatField(null=True, blank=True)
+    rice_thai_25 = models.FloatField(null=True, blank=True)
+    rice_thai_a_1 = models.FloatField(null=True, blank=True)
+    rice_vietnamese_5 = models.FloatField(null=True, blank=True)
+    wheat_us_srw = models.FloatField(null=True, blank=True)
+    wheat_us_hrw = models.FloatField(null=True, blank=True)
+    banana_europe = models.FloatField(null=True, blank=True)
+    banana_us = models.FloatField(null=True, blank=True)
+    orange = models.FloatField(null=True, blank=True)
+    beef = models.FloatField(null=True, blank=True)
+    chicken = models.FloatField(null=True, blank=True)
+    lamb = models.FloatField(null=True, blank=True)
+    shrimps_mexican = models.FloatField(null=True, blank=True)
+    sugar_eu = models.FloatField(null=True, blank=True)
+    sugar_us = models.FloatField(null=True, blank=True)
+    sugar_world = models.FloatField(null=True, blank=True)
+    tobacco_us_import_uv = models.FloatField(null=True, blank=True)
+    logs_cameroon = models.FloatField(null=True, blank=True)
+    logs_malaysian = models.FloatField(null=True, blank=True)
+    sawnwood_cameroon = models.FloatField(null=True, blank=True)
+    sawnwood_malaysian = models.FloatField(null=True, blank=True)
+    plywood = models.FloatField(null=True, blank=True)
+    cotton_a_index = models.FloatField(null=True, blank=True)
+    rubber_tsr20 = models.FloatField(null=True, blank=True)
+    rubber_rss3 = models.FloatField(null=True, blank=True)
+    phosphate_rock = models.FloatField(null=True, blank=True)
+    dap = models.FloatField(null=True, blank=True)
+    tsp = models.FloatField(null=True, blank=True)
+    urea = models.FloatField(null=True, blank=True)
+    potassium_chloride = models.FloatField(null=True, blank=True)
+    aluminum = models.FloatField(null=True, blank=True)
+    iron_ore_cfr_spot = models.FloatField(null=True, blank=True)
+    copper = models.FloatField(null=True, blank=True)
+    lead = models.FloatField(null=True, blank=True)
+    tin = models.FloatField(null=True, blank=True)
+    nickel = models.FloatField(null=True, blank=True)
+    zinc = models.FloatField(null=True, blank=True)
+    gold = models.FloatField(null=True, blank=True)
+    platinum = models.FloatField(null=True, blank=True)
+    silver = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Commodity Data for Year {self.year}"
+    
+    class Meta:
+        verbose_name = "Commodity"
+        verbose_name_plural = "Commodities"
+        
+
+
