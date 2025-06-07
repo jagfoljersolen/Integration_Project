@@ -93,7 +93,7 @@ class Commodity(models.Model):
     logs_malaysian_cubic_meter = models.FloatField(null=True, blank=True, verbose_name="Logs Malaysian ($/cubic meter)")
     sawnwood_cameroon_cubic_meter = models.FloatField(null=True, blank=True, verbose_name="Sawnwood Cameroon ($/cubic meter)")
     sawnwood_malaysian_cubic_meter = models.FloatField(null=True, blank=True, verbose_name="Sawnwood Malaysian ($/cubic meter)")
-    plywood_cents_sheet = models.FloatField(null=True, blank=True, verbose_name="Plywood (¢/sheet)")
+    plywood_sheet = models.FloatField(null=True, blank=True, verbose_name="Plywood (¢/sheet)")
     cotton_a_index_kg = models.FloatField(null=True, blank=True, verbose_name="Cotton A Index ($/kg)")
     rubber_tsr20_kg = models.FloatField(null=True, blank=True, verbose_name="Rubber TSR20 ($/kg)")
     rubber_rss3_kg = models.FloatField(null=True, blank=True, verbose_name="Rubber RSS3 ($/kg)")

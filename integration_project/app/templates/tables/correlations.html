@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}correlations{% endblock title %}
+
+{% block content %}
+
+{% if rows %}
+<div class='table-responsive'>
+    <table class='table table-sm table-dark table-striped table-bordered'>
+        <thead>
+            <tr>
+                {% for column_name in column_verbose_names %}
+                    <th class='text-nowrap' scope='col'> {{column_name|capfirst}} </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for cell_value in row.values %}
+                        <td>{{cell_value}}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <p class='text-muted'> No rows found. </p>
+{% endif %}
+
+{% endblock content %}
