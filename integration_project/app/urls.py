@@ -4,5 +4,5 @@ from .views import CorrelationView
 app_name = 'app'
 
 urlpatterns = [
-    path('', CorrelationView.as_view(), name='commodities'),
+    path('correlations/', CorrelationView.as_view(), name='correlations'),
 ]

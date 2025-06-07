@@ -4,10 +4,40 @@
 
 {% block content %}
 
+<div class="mb-3">
+    <a
+        href="?table=commodities"
+        class="btn {% if current_table == 'commodities' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+    >
+        Show Commodities
+    </a>
+    <a
+        href="?table=conflicts"
+        class="btn {% if current_table == 'conflicts' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+    >
+        Show Conficts
+    </a>
+</div>
+
+<!-- 1) Dropdown to pick join field -->
+<form method="get" class="mb-3">
+    <input type="hidden" name="table" value="join">
+
+    <label for="join-select" class="form-label">Join on:</label>
+    <select id="join-select" name="join_on" class="form-select w-auto d-inline-block">
+        {% for code, col in join_choices %}
+        <option value="{{ code }}" {% if code == current_join %}selected{% endif %}>
+            {{ col|capfirst }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm ms-2">Reload</button>
+</form>
+
 {% if rows %}
 <div class='table-responsive'>
     <table class='table table-sm table-dark table-striped table-bordered'>
-        <thead>
+        <thead class="thead-dark">
             <tr>
                 {% for column_name in column_verbose_names %}
                     <th class='text-nowrap' scope='col'> {{column_name|capfirst}} </th>
@@ -26,7 +56,7 @@
     </table>
 </div>
 {% else %}
-    <p class='text-muted'> No rows found. </p>
+    <p class='text-muted'> No rows found in the {{current_table|capfirst}}. </p>
 {% endif %}
 
 {% endblock content %}

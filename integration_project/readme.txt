@@ -30,6 +30,4 @@ admin
 admin@dmin.com
 admin1234
 
-
-
-https://getbootstrap.com/docs/4.1/content/tables/
+main entrypoint: http://localhost:8000/correlations/
