@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conflicts vs Commodities Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        #commoditySelect {
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .chart-container {
+            position: relative;
+            height: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-card">
+        <h1>Conflict Events vs Commodity Prices</h1>
+        <select id="commoditySelect">
+            {% for commodity in commodities %}
+                <option value="{{ commodity.field }}" {% if commodity.field == default_commodity %}selected{% endif %}>
+                    {{ commodity.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <div class="chart-container">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+        <div id="loading" class="loading">Loading data...</div>
+    </div>
+
+    {{ yearly_data|json_script:"conflict-data" }}
+
+    <script>
+        let chartInstance = null;
+        const unitMap = {
+            'cocoa': '$/kg',
+            'crude_oil_average_bbl': '$/bbl',
+            'gold_troy_oz': '$/oz',
+            'aluminum_mt': '$/mt',
+            // Add other commodity units as needed
+        };
+
+        // Initialize with conflict data
+        const conflictData = JSON.parse(document.getElementById('conflict-data').textContent);
+        const conflictYears = conflictData.map(item => item.year);
+        const conflictCounts = conflictData.map(item => item.total);
+
+        async function loadComparison(commodity) {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                
+                // Fetch commodity data
+                const commodityResponse = await fetch(`/api/commodity-data/?commodity=${commodity}`);
+                if (!commodityResponse.ok) throw new Error('Commodity data load failed');
+                const commodityData = await commodityResponse.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (chartInstance) chartInstance.destroy();
+
+                const ctx = document.getElementById('comparisonChart').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: conflictYears,
+                        datasets: [
+                            {
+                                label: 'Conflict Events',
+                                data: conflictCounts,
+                                borderColor: '#FF6B6B',
+                                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                                yAxisID: 'y',
+                                borderWidth: 2,
+                                tension: 0.1
+                            },
+                            {
+                                label: commodityData.commodity_name,
+                                data: commodityData.prices,
+                                borderColor: '#4ECDC4',
+                                backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                                yAxisID: 'y1',
+                                borderWidth: 2,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Conflict Events vs Commodity Prices Over Time',
+                                font: { size: 18, weight: 'bold' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const datasetLabel = context.dataset.label;
+                                        const value = context.parsed.y;
+                                        const unit = datasetLabel === 'Conflict Events' ? 
+                                            ' events' : ` ${unitMap[commodity] || ''}`;
+                                        return `${datasetLabel}: ${value.toLocaleString()}${unit}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year',
+                                    font: { weight: 'bold' }
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Conflict Events (count)',
+                                    font: { weight: 'bold' }
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y1: {
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: `Commodity Price (${unitMap[commodity] || 'unit'})`,
+                                    font: { weight: 'bold' }
+                                },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                document.getElementById('loading').innerHTML = 'Error loading data';
+                console.error('Data loading failed:', error);
+            }
+        }
+
+        // Initial load
+        loadComparison(document.getElementById('commoditySelect').value);
+
+        // Update on selection change
+        document.getElementById('commoditySelect').addEventListener('change', (e) => {
+            loadComparison(e.target.value);
+        });
+    </script>
+</body>
+</html>

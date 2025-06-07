@@ -1,0 +1,165 @@
+<!-- templates/conflicts/dashboard.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Timeline Analysis Card  -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Conflict Timeline Analysis</h4>
+                </div>
+                <div class="card-body">
+                    <div id="timelineChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Intensity Distribution Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Intensity Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="intensityChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Intensity Level Legend -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Intensity Level Legend</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="alert bg-primary text-white">
+                            <h6>Level 1: Low Intensity</h6>
+                            <small>Minor skirmishes, limited casualties</small>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="alert bg-warning text-white">
+                            <h6>Level 2: Medium Intensity</h6>
+                            <small>Regular armed engagements, moderate casualties</small>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="alert bg-danger text-white">
+                            <h6>Level 3: High Intensity</h6>
+                            <small>Large-scale battles, significant casualties</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    
+
+    <!-- Conflict Type Analysis and Legend -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Conflict Type Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div id="typeChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Conflict Type Legend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-danger">
+                                <h6>Type 1: State-Based Conflict</h6>
+                                <small>Fighting between government forces and organized armed groups</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-warning">
+                                <h6>Type 2: Interstate Conflict</h6>
+                                <small>Armed conflict between two or more recognized states</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-primary">
+                                <h6>Type 3: Internal Conflict</h6>
+                                <small>Violence between government and non-state groups without foreign intervention</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6>Type 4: Internationalized Conflict</h6>
+                                <small>Internal conflict with significant foreign military involvement</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    
+</div>
+
+</div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const yearlyData = JSON.parse('{{ yearly_data|escapejs }}');
+    const locationData = JSON.parse('{{ location_data|escapejs }}');
+    const intensityData = JSON.parse('{{ intensity_data|escapejs }}');
+    const conflictTypes = JSON.parse('{{ conflict_types|escapejs }}');
+
+    // Timeline Chart
+    const timelineTrace = {
+        x: yearlyData.map(d => d.year),
+        y: yearlyData.map(d => d.total),
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Total Conflicts'
+    };
+    Plotly.newPlot('timelineChart', [timelineTrace], {title: 'Conflicts Over Time'});
+
+    // Intensity Chart
+const intensityTrace = {
+    x: intensityData.map(d => `Level ${d.intensity_level}`),
+    y: intensityData.map(d => d.count),
+    type: 'bar',
+    marker: {
+        color: ['#007bff', '#ffc107', '#dc3545']
+    }
+};
+Plotly.newPlot('intensityChart', [intensityTrace], {title: 'Conflict Intensity Levels'});
+
+// Type Analysis Chart
+const typeTrace = {
+    values: Object.values(conflictTypes).map((_, i) => 
+        yearlyData.reduce((acc, curr) => acc + curr[`type${i+1}`], 0)),
+    labels: Object.values(conflictTypes),
+    type: 'pie',
+    marker: {
+        colors: ['#f2cece', ' #f9eb9b ', ' #a4c7ff ', ' #9decf3 ']
+    }
+};
+Plotly.newPlot('typeChart', [typeTrace], {title: 'Conflict Type Distribution'});
+
+    
+});
+</script>
+{% endblock %}

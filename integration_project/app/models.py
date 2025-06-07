@@ -1,6 +1,12 @@
 from django.db import models
 
 class Conflict(models.Model):
+    TYPE_CHOICES = (
+    (1, 'Type 1'),
+    (2, 'Type 2'), 
+    (3, 'Type 3'),
+    (4, 'Type 4'),
+    )
     conflict_id = models.IntegerField(primary_key=True)
     location = models.CharField(max_length=255)
     side_a = models.CharField(max_length=255)
