@@ -1,171 +1,162 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Commodity Prices</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #f9f9f9;
-            padding: 20px;
-            max-width: 1000px;
-            margin: 20px auto;
-        }
-        .chart-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        #commoditySelect {
-            margin-bottom: 20px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 100%;
-            max-width: 400px;
-        }
-        .chart-container {
-            position: relative;
-            height: 500px;
-            width: 100%;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-    <div class="chart-card">
-        <h1>Commodity Price Trends</h1>
-        <select id="commoditySelect">
-            {% for commodity in commodities %}
-                <option value="{{ commodity.field }}" {% if commodity.field == default_commodity %}selected{% endif %}>
-                    {{ commodity.name }}
-                </option>
-            {% endfor %}
-        </select>
+{% extends "base.html" %}
 
-        <div class="chart-container">
-            <canvas id="priceChart"></canvas>
-        </div>
-        <div id="loading" class="loading">Loading chart data...</div>
+{% block title %}Commodity Prices{% endblock %}
+
+{% block content %}
+<style>
+    .chart-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    #commoditySelect {
+        margin-bottom: 20px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 100%;
+        max-width: 400px;
+    }
+    .chart-container {
+        position: relative;
+        height: 500px;
+        width: 100%;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+</style>
+
+<div class="chart-card">
+    <h1>Commodity Price Trends</h1>
+    <select id="commoditySelect">
+        {% for commodity in commodities %}
+            <option value="{{ commodity.field }}" {% if commodity.field == default_commodity %}selected{% endif %}>
+                {{ commodity.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <div class="chart-container">
+        <canvas id="priceChart"></canvas>
     </div>
+    <div id="loading" class="loading">Loading chart data...</div>
+</div>
 
-    <script>
-        let chartInstance = null;
-        // Map commodity fields to units
-        const unitMap = {
-            'cocoa': '$/kg',
-            'coffee_arabica_kg': '$/kg',
-            'coffee_robusta_kg': '$/kg',
-            'crude_oil_average_bbl': '$/bbl',
-            'gold_troy_oz': '$/oz',
-            'silver_troy_oz': '$/oz',
-            'aluminum_mt': '$/mt',
-            'copper_mt': '$/mt',
-            'wheat_us_srw_mt': '$/mt',
-            'maize_mt': '$/mt',
-            'rice_thai_5_mt': '$/mt',
-            'palm_oil_mt': '$/mt',
-            'soybeans_mt': '$/mt',
-            'sugar_world_kg': '$/kg',
-            'beef_kg': '$/kg',
-            'chicken_kg': '$/kg'
-        };
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let chartInstance = null;
+    const unitMap = {
+        'cocoa': '$/kg',
+        'coffee_arabica_kg': '$/kg',
+        'coffee_robusta_kg': '$/kg',
+        'crude_oil_average_bbl': '$/bbl',
+        'gold_troy_oz': '$/oz',
+        'silver_troy_oz': '$/oz',
+        'aluminum_mt': '$/mt',
+        'copper_mt': '$/mt',
+        'wheat_us_srw_mt': '$/mt',
+        'maize_mt': '$/mt',
+        'rice_thai_5_mt': '$/mt',
+        'palm_oil_mt': '$/mt',
+        'soybeans_mt': '$/mt',
+        'sugar_world_kg': '$/kg',
+        'beef_kg': '$/kg',
+        'chicken_kg': '$/kg'
+    };
 
-        async function loadChart(commodity) {
-            try {
-                document.getElementById('loading').style.display = 'block';
-                const response = await fetch(`/api/commodity-data/?commodity=${commodity}`);
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API Error (${response.status}): ${errorText}`);
-                }
-                const data = await response.json();
-                document.getElementById('loading').style.display = 'none';
+    async function loadChart(commodity) {
+        try {
+            document.getElementById('loading').style.display = 'block';
+            const response = await fetch(`/api/commodity-data/?commodity=${commodity}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error (${response.status}): ${errorText}`);
+            }
+            const data = await response.json();
+            document.getElementById('loading').style.display = 'none';
 
-                if (chartInstance) chartInstance.destroy();
+            if (chartInstance) chartInstance.destroy();
 
-                const ctx = document.getElementById('priceChart').getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.years,
-                        datasets: [{
-                            label: data.commodity_name,
-                            data: data.prices,
-                            borderColor: '#8B4513', // Cocoa brown
-                            backgroundColor: 'rgba(139, 69, 19, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: `${data.commodity_name} Price Over Time`,
-                                font: { size: 16, weight: 'bold' }
-                            },
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `${data.commodity_name}: ${context.parsed.y.toFixed(2)} ${unitMap[commodity] || ''}`;
-                                    }
-                                }
-                            }
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.years,
+                    datasets: [{
+                        label: data.commodity_name,
+                        data: data.prices,
+                        borderColor: '#8B4513',
+                        backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${data.commodity_name} Price Over Time`,
+                            font: { size: 16, weight: 'bold' }
                         },
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Year'
-                                },
-                                grid: {
-                                    color: 'rgba(0,0,0,0.05)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: `Price (${unitMap[commodity] || 'unit'})`
-                                },
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.05)'
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${data.commodity_name}: ${context.parsed.y.toFixed(2)} ${unitMap[commodity] || ''}`;
                                 }
                             }
                         }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: `Price (${unitMap[commodity] || 'unit'})`
+                            },
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
                     }
-                });
-            } catch (error) {
-                document.getElementById('loading').innerHTML = 'Error loading chart. Please try again.';
-                console.error('Chart loading failed:', error);
-            }
+                }
+            });
+        } catch (error) {
+            document.getElementById('loading').innerHTML = 'Error loading chart. Please try again.';
+            console.error('Chart loading failed:', error);
         }
+    }
 
-        // Initial load
-        loadChart(document.getElementById('commoditySelect').value);
+    // Initial load
+    loadChart(document.getElementById('commoditySelect').value);
 
-        // Update chart when selection changes
-        document.getElementById('commoditySelect').addEventListener('change', (e) => {
-            loadChart(e.target.value);
-        });
-    </script>
-</body>
-</html>
+    // Update chart when selection changes
+    document.getElementById('commoditySelect').addEventListener('change', (e) => {
+        loadChart(e.target.value);
+    });
+</script>
+{% endblock %}

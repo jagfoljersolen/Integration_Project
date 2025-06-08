@@ -1,76 +1,154 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Conflicts vs Commodities Analysis</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #f9f9f9;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 20px auto;
-        }
-        .chart-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        #commoditySelect {
-            margin-bottom: 20px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 100%;
-            max-width: 400px;
-        }
-        .chart-container {
-            position: relative;
-            height: 600px;
-            width: 100%;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-    <div class="chart-card">
-        <h1>Conflict Events vs Commodity Prices</h1>
-        <select id="commoditySelect">
-            {% for commodity in commodities %}
-                <option value="{{ commodity.field }}" {% if commodity.field == default_commodity %}selected{% endif %}>
-                    {{ commodity.name }}
-                </option>
+{% extends "base.html" %}
+
+{% block title %}Conflicts vs Commodity Prices{% endblock title %}
+
+{% block content %}
+<style>
+
+.chart-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;      
+    }
+#commoditySelect {
+        margin-bottom: 20px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 100%;
+        max-width: 400px;
+    }
+.chart-container {
+    position: relative;
+    height: 600px;
+    width: 100%;
+    }
+h1 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    }
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    }
+</style>
+
+<div class="chart-card">
+    <h1>Conflict Events vs Commodity Prices</h1>
+    <select id="commoditySelect">
+        {% for commodity in commodities %}
+        <option value="{{ commodity.field }}" {% if commodity.field == default_commodity %}selected{% endif %}>
+               {{ commodity.name }}
+        </option>
             {% endfor %}
-        </select>
-
-        <div class="chart-container">
-            <canvas id="comparisonChart"></canvas>
-        </div>
-        <div id="loading" class="loading">Loading data...</div>
+    </select>
+    <div class="chart-container">
+        <canvas id="comparisonChart"></canvas>
     </div>
+    <div id="loading" class="loading">Loading data...</div>
+</div>
 
-    {{ yearly_data|json_script:"conflict-data" }}
+{{ yearly_data|json_script:"conflict-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let chartInstance = null;
+    const unitMap = {
+        // Energy commodities
+       'crude_oil_average_bbl': '$/bbl',
+       'crude_oil_brent_bbl': '$/bbl',
+       'crude_oil_dubai_bbl': '$/bbl',
+        'crude_oil_wti_bbl': '$/bbl',
 
-    <script>
-        let chartInstance = null;
-        const unitMap = {
-            'cocoa': '$/kg',
-            'crude_oil_average_bbl': '$/bbl',
-            'gold_troy_oz': '$/oz',
-            'aluminum_mt': '$/mt',
-            // Add other commodity units as needed
-        };
+        // Coal
+       'coal_australian_mt': '$/mt',
+       'coal_south_african_mt': '$/mt',
+
+        // Natural Gas
+        'natural_gas_us_mmbtu': '$/mmbtu',
+        'natural_gas_europe_mmbtu': '$/mmbtu',
+        'liquefied_natural_gas_japan_mmbtu': '$/mmbtu',
+        'natural_gas_index_2010_100': '(2010=100)', // No currency unit
+
+        // Agricultural - Beverages
+        'cocoa': '$/kg',
+        'coffee_arabica_kg': '$/kg',
+        'coffee_robusta_kg': '$/kg',
+        'tea_avg_3_auctions_kg': '$/kg',
+        'tea_colombo_kg': '$/kg',
+        'tea_kolkata_kg': '$/kg',
+        'tea_mombasa_kg': '$/kg',
+
+        // Oils and meals
+        'coconut_oil_mt': '$/mt',
+        'groundnuts_mt': '$/mt',
+        'fish_meal_mt': '$/mt',
+        'groundnut_oil_mt': '$/mt',
+        'palm_oil_mt': '$/mt',
+        'palm_kernel_oil_mt': '$/mt',
+        'soybeans_mt': '$/mt',
+        'soybean_oil_mt': '$/mt',
+        'soybean_meal_mt': '$/mt',
+
+        // Grains
+        'barley_mt': '$/mt',
+        'maize_mt': '$/mt',
+        'sorghum_mt': '$/mt',
+        'rice_thai_5_mt': '$/mt',
+        'rice_thai_25_mt': '$/mt',
+        'rice_thai_a_1_mt': '$/mt',
+        'rice_vietnamese_5_mt': '$/mt',
+        'wheat_us_srw_mt': '$/mt',
+        'wheat_us_hrw_mt': '$/mt',
+
+        // Other food
+        'banana_europe_kg': '$/kg',
+        'banana_us_kg': '$/kg',
+        'orange_kg': '$/kg',
+        'beef_kg': '$/kg',
+        'chicken_kg': '$/kg',
+        'lamb_kg': '$/kg',
+        'shrimps_mexican_kg': '$/kg',
+        'sugar_eu_kg': '$/kg',
+        'sugar_us_kg': '$/kg',
+        'sugar_world_kg': '$/kg',
+
+        // Raw materials
+        'tobacco_us_import_uv_mt': '$/mt',
+        'logs_cameroon_cubic_meter': '$/cubic meter',
+        'logs_malaysian_cubic_meter': '$/cubic meter',
+        'sawnwood_cameroon_cubic_meter': '$/cubic meter',
+        'sawnwood_malaysian_cubic_meter': '$/cubic meter',
+        'plywood_sheet': '¢/sheet',
+        'cotton_a_index_kg': '$/kg',
+        'rubber_tsr20_kg': '$/kg',
+        'rubber_rss3_kg': '$/kg',
+
+        // Fertilizers
+        'phosphate_rock_mt': '$/mt',
+        'dap_mt': '$/mt',
+        'tsp_mt': '$/mt',
+        'urea_mt': '$/mt',
+        'potassium_chloride_mt': '$/mt',
+
+        // Metals and minerals
+        'aluminum_mt': '$/mt',
+        'iron_ore_cfr_spot_mt': '$/mt',
+        'copper_mt': '$/mt',
+        'lead_mt': '$/mt',
+        'tin_mt': '$/mt',
+        'nickel_mt': '$/mt',
+        'zinc_mt': '$/mt',
+
+        // Precious metals
+        'gold_troy_oz': '$/troy oz',
+        'platinum_troy_oz': '$/troy oz',
+        'silver_troy_oz': '$/troy oz'
+    };
+
 
         // Initialize with conflict data
         const conflictData = JSON.parse(document.getElementById('conflict-data').textContent);
@@ -185,5 +263,6 @@
             loadComparison(e.target.value);
         });
     </script>
-</body>
-</html>
+    
+{% endblock content %}
+

@@ -1,13 +1,171 @@
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 from .models import Commodity, Conflict
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 import logging
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Avg, Max, Min
 import json
 
+from .forms import CreateUserForm, CreateLoginForm
+from django.contrib.auth.models import auth
+from django.contrib.auth import authenticate, logout
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='app:login')
+def main_dashboard(request):
+    """
+    Main dashboard view that aggregates data from commodity and conflict models
+    """
+    # Get summary statistics
+    total_commodities = Commodity.objects.values('year').distinct().count()
+    total_conflicts = Conflict.objects.count()
+    
+    # Get latest data points
+    latest_commodity_year = Commodity.objects.aggregate(Max('year'))['year__max']
+    latest_conflict_year = Conflict.objects.aggregate(Max('year'))['year__max']
+    
+    # Get top volatile commodities (you'll need to calculate volatility)
+    # This is a simplified example - you may want to implement proper volatility calculation
+    volatile_commodities = []
+    commodity_fields = [
+        'crude_oil_average_bbl', 'gold_troy_oz', 'cocoa', 
+        'natural_gas_us_mmbtu', 'coffee_arabica_kg'
+    ]
+    
+    for field in commodity_fields:
+        if hasattr(Commodity, field):
+            stats = Commodity.objects.aggregate(
+                avg=Avg(field),
+                max_val=Max(field),
+                min_val=Min(field)
+            )
+            if all(stats.values()):
+                volatility = ((stats['max_val'] - stats['min_val']) / stats['avg']) * 100
+                volatile_commodities.append({
+                    'name': field.replace('_', ' ').title(),
+                    'volatility': round(volatility, 2)
+                })
+    
+    # Sort by volatility and get top 5
+    volatile_commodities = sorted(volatile_commodities, key=lambda x: x['volatility'], reverse=True)[:5]
+    
+    context = {
+        'total_commodities': total_commodities,
+        'total_conflicts': total_conflicts,
+        'latest_commodity_year': latest_commodity_year,
+        'latest_conflict_year': latest_conflict_year,
+        'volatile_commodities': volatile_commodities,
+        'data_range': f"{Commodity.objects.aggregate(Min('year'))['year__min']}-{latest_commodity_year}",
+    }
+    
+    return render(request, 'main_dashboard.html', context)
+
+@login_required(login_url='app:login')
+def dashboard_commodity_api(request):
+    """
+    API endpoint for commodity data used by dashboard charts
+    """
+    commodity = request.GET.get('commodity', 'cocoa')
+    
+    try:
+        if not hasattr(Commodity, commodity):
+            return JsonResponse({'error': f'Invalid commodity: {commodity}'}, status=400)
+        
+        # Get data for the selected commodity
+        filter_kwargs = {f'{commodity}__isnull': False}
+        queryset = Commodity.objects.filter(**filter_kwargs).order_by('year')
+        
+        data = {
+            'years': [c.year for c in queryset],
+            'prices': [float(getattr(c, commodity)) for c in queryset],
+            'commodity_name': commodity.replace('_', ' ').title()
+        }
+        
+        return JsonResponse(data)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required(login_url='app:login')
+def dashboard_conflict_api(request):
+    """
+    API endpoint for conflict data used by dashboard charts
+    """
+    try:
+        # Yearly conflict data
+        yearly_data = list(Conflict.objects.values('year').annotate(
+            total=Count('conflict_id'),
+            type1=Count('conflict_id', filter=Q(type_of_conflict=1)),
+            type2=Count('conflict_id', filter=Q(type_of_conflict=2)),
+            type3=Count('conflict_id', filter=Q(type_of_conflict=3)),
+            type4=Count('conflict_id', filter=Q(type_of_conflict=4))
+        ).order_by('year'))
+        
+        # Location data
+        location_data = list(Conflict.objects.values('location').annotate(
+            count=Count('conflict_id')
+        ).order_by('-count')[:10])
+        
+        # Intensity data
+        intensity_data = list(Conflict.objects.values('intensity_level').annotate(
+            count=Count('conflict_id')
+        ).order_by('intensity_level'))
+        
+        return JsonResponse({
+            'yearly_data': yearly_data,
+            'location_data': location_data,
+            'intensity_data': intensity_data
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def home(request):
+    if request.user.is_authenticated:
+        return render(request, 'home.html', {})
+    return redirect('app:login')
+
+def register_view(request):
+
+    form = CreateUserForm()
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('app:login')
+    
+    context = { 'register_form': form }
+    
+    return render(request, 'auth/register.html', context)
+
+def login_view(request):
+
+    form = CreateLoginForm(request)
+    if request.method == 'POST':
+        form = CreateLoginForm(request, data=request.POST)
+
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+
+
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+
+                auth.login(request, user)
+                return redirect('app:main_dashboard')
+        else:
+            print(form.errors) 
+    
+    context = { 'login_form': form }
+    
+    return render(request, 'auth/login.html', context)
+
+def logout_view(request):
+    logout(request)
+    return redirect('app:login')
 
 class CorrelationView(TemplateView):
     template_name = 'tables/correlations.html'
@@ -106,7 +264,7 @@ class CorrelationView(TemplateView):
 
 
 
-
+@login_required(login_url='app:login')
 def commodity_dashboard(request):
     
     commodities = []
@@ -202,6 +360,8 @@ def commodity_dashboard(request):
 
 logger = logging.getLogger(__name__)
 
+
+@login_required(login_url='app:login')
 @require_GET
 def commodity_data_api(request):
     commodity = request.GET.get('commodity', 'cocoa')
@@ -236,7 +396,7 @@ def commodity_data_api(request):
     
 
 
-
+@login_required(login_url='app:login')
 def conflict_dashboard(request):
     # Base queryset
     conflicts = Conflict.objects.all()
@@ -267,6 +427,7 @@ def conflict_dashboard(request):
     return render(request, 'conflicts.html', context)
 
 
+@login_required(login_url='app:login')
 @require_GET
 def conflict_data_api(request):
     conflicts = Conflict.objects.all()
@@ -280,7 +441,7 @@ def conflict_data_api(request):
     }) 
 
 
-
+@login_required(login_url='app:login')
 def conflicts_vs_commodities(request):
 
     conflicts = Conflict.objects.all()

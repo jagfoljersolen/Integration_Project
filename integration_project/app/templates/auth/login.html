@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <form method="POST" action="{% url 'app:login' %}">
+        {% csrf_token %}
+        {{ login_form.as_p }}
+        <input type="submit" value="Login">
+        {% if login_form.errors %}
+            <div style="color: red;">
+                {% for field, errors in login_form.errors.items %}
+                    {% for error in errors %}
+                        {{ error }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </form>
+    <p>
+        Don't have an account? <a href="{% url 'app:register' %}">Register here</a>
+    </p>
+</body>
+</html>
