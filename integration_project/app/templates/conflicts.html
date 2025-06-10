@@ -20,18 +20,18 @@
 
     <!-- Intensity Distribution Card -->
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-md-9">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title">Intensity Distribution</h5>
                 </div>
                 <div class="card-body">
-                    <div id="intensityChart" style="height: 300px;"></div>
+                    <div id="intensityChart" style="height: 500px;"></div>
                 </div>
             </div>
         </div>
         <!-- Intensity Level Legend -->
-    <div class="col-md-6">
+    <div class="col-md-3">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">Intensity Level Legend</h5>
@@ -118,48 +118,91 @@
 
 </div>
 
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const yearlyData = JSON.parse('{{ yearly_data|escapejs }}');
-    const locationData = JSON.parse('{{ location_data|escapejs }}');
-    const intensityData = JSON.parse('{{ intensity_data|escapejs }}');
-    const conflictTypes = JSON.parse('{{ conflict_types|escapejs }}');
+document.addEventListener('DOMContentLoaded', async function () {
+    try {
+        const yearlyResponse = await fetch('/api/conflict-data/');
+        const yearlyDataJson = await yearlyResponse.json();
+        const yearlyData = yearlyDataJson.yearly_data;
 
-    // Timeline Chart
-    const timelineTrace = {
-        x: yearlyData.map(d => d.year),
-        y: yearlyData.map(d => d.total),
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: 'Total Conflicts'
-    };
-    Plotly.newPlot('timelineChart', [timelineTrace], {title: 'Conflicts Over Time'});
+        const intensityResponse = await fetch('/api/conflict-intensity/');
+        const intensityData = (await intensityResponse.json()).intensity_data;
 
-    // Intensity Chart
-const intensityTrace = {
-    x: intensityData.map(d => `Level ${d.intensity_level}`),
-    y: intensityData.map(d => d.count),
-    type: 'bar',
-    marker: {
-        color: ['#007bff', '#ffc107', '#dc3545']
+        const typeResponse = await fetch('/api/conflict-types/');
+        const conflictTypes = (await typeResponse.json()).conflict_types;
+
+        // Timeline Chart
+        Plotly.newPlot('timelineChart', [{
+            x: yearlyData.map(d => d.year),
+            y: yearlyData.map(d => d.total),
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Total Conflicts'
+        }], { title: 'Conflicts Over Time' });
+
+        // Intensity Chart
+        const levels = [1, 2, 3];
+        const years = [...new Set(intensityData.map(d => d.year))].sort();
+        const colors = ['#007bff', '#ffc107', '#dc3545'];
+        
+        const traces = levels.map((level, idx) => {
+            return {
+                x: years,
+                y: years.map(year => {
+                    const item = intensityData.find(d => d.year === year && d.intensity_level === level);
+                    return item ? item.count : 0;
+                }),
+                name: `Level ${level}`,
+                type: 'bar',
+                marker: { color: colors[idx] }
+            };
+        });
+
+        Plotly.newPlot('intensityChart', traces, {
+            title: 'Conflict Intensity Distribution by Year',
+            barmode: 'group',
+            width: 900,
+            height: 500,
+            xaxis: {
+                title: 'Year',
+                tickangle: -45
+            },
+            yaxis: {
+                title: 'Number of Conflicts'
+            },
+            legend: {
+                orientation: 'h',
+                x: 0.1,
+                y: -0.2,
+                title: {
+                    text: 'Intensity Levels'
+                }
+            },
+            margin: { t: 50, b: 100 }
+        });
+
+
+        // Type Chart
+        const conflictTypeLabels = {
+            1: 'State-Based Conflict',
+            2: 'Interstate Conflict',
+            3: 'Internal Conflict',
+            4: 'Internationalized Conflict'
+        };
+        Plotly.newPlot('typeChart', [{
+            values: conflictTypes.map(d => d.total),
+            labels: conflictTypes.map(d => conflictTypeLabels[d.type_of_conflict]),
+            type: 'pie',
+            marker: {
+                colors: ['#f2cece', '#f9eb9b', '#a4c7ff', '#9decf3']
+            }
+        }], { title: 'Conflict Type Distribution' });
+
+    } catch (error) {
+        console.error('Error loading chart data:', error);
     }
-};
-Plotly.newPlot('intensityChart', [intensityTrace], {title: 'Conflict Intensity Levels'});
-
-// Type Analysis Chart
-const typeTrace = {
-    values: Object.values(conflictTypes).map((_, i) => 
-        yearlyData.reduce((acc, curr) => acc + curr[`type${i+1}`], 0)),
-    labels: Object.values(conflictTypes),
-    type: 'pie',
-    marker: {
-        colors: ['#f2cece', ' #f9eb9b ', ' #a4c7ff ', ' #9decf3 ']
-    }
-};
-Plotly.newPlot('typeChart', [typeTrace], {title: 'Conflict Type Distribution'});
-
-    
 });
+
 </script>
 {% endblock %}

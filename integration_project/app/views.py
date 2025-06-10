@@ -26,37 +26,13 @@ def main_dashboard(request):
     latest_commodity_year = Commodity.objects.aggregate(Max('year'))['year__max']
     latest_conflict_year = Conflict.objects.aggregate(Max('year'))['year__max']
     
-    # Get top volatile commodities (you'll need to calculate volatility)
-    # This is a simplified example - you may want to implement proper volatility calculation
-    volatile_commodities = []
-    commodity_fields = [
-        'crude_oil_average_bbl', 'gold_troy_oz', 'cocoa', 
-        'natural_gas_us_mmbtu', 'coffee_arabica_kg'
-    ]
     
-    for field in commodity_fields:
-        if hasattr(Commodity, field):
-            stats = Commodity.objects.aggregate(
-                avg=Avg(field),
-                max_val=Max(field),
-                min_val=Min(field)
-            )
-            if all(stats.values()):
-                volatility = ((stats['max_val'] - stats['min_val']) / stats['avg']) * 100
-                volatile_commodities.append({
-                    'name': field.replace('_', ' ').title(),
-                    'volatility': round(volatility, 2)
-                })
-    
-    # Sort by volatility and get top 5
-    volatile_commodities = sorted(volatile_commodities, key=lambda x: x['volatility'], reverse=True)[:5]
     
     context = {
         'total_commodities': total_commodities,
         'total_conflicts': total_conflicts,
         'latest_commodity_year': latest_commodity_year,
         'latest_conflict_year': latest_conflict_year,
-        'volatile_commodities': volatile_commodities,
         'data_range': f"{Commodity.objects.aggregate(Min('year'))['year__min']}-{latest_commodity_year}",
     }
     
@@ -261,15 +237,7 @@ class CorrelationView(TemplateView):
         return ctx
     
 
-
-
-
-@login_required(login_url='app:login')
-def commodity_dashboard(request):
-    
-    commodities = []
-
-    commodity_fields = [
+commodity_fields = [
         ('crude_oil_average_bbl', 'Crude Oil Average'),
         ('crude_oil_brent_bbl', 'Crude Oil Brent'),
         ('crude_oil_dubai_bbl', 'Crude Oil Dubai'),
@@ -340,7 +308,13 @@ def commodity_dashboard(request):
         ('platinum_troy_oz', 'Platinum'),
         ('silver_troy_oz', 'Silver')
     ]
+
+
+@login_required(login_url='app:login')
+def commodity_dashboard(request):
     
+    commodities = []
+
     # Check which commodities have data
     for field, name in commodity_fields:
         if hasattr(Commodity, field):
@@ -361,47 +335,13 @@ def commodity_dashboard(request):
 logger = logging.getLogger(__name__)
 
 
-@login_required(login_url='app:login')
-@require_GET
-def commodity_data_api(request):
-    commodity = request.GET.get('commodity', 'cocoa')
-    
-    try:
-        if not hasattr(Commodity, commodity):
-            return JsonResponse({
-                'error': f"Invalid commodity field: {commodity}"
-            }, status=400)
-
-        filter_kwargs = {f'{commodity}__isnull': False}
-        queryset = Commodity.objects.filter(**filter_kwargs).order_by('year')
-        
-        if not queryset.exists():
-            return JsonResponse({
-                'error': f"No data available for {commodity}"
-            }, status=404)
-            
-        data = {
-            'years': [c.year for c in queryset],
-            'prices': [float(getattr(c, commodity)) for c in queryset],
-            'commodity_name': commodity.replace('_', ' ').title()
-        }
-        
-        return JsonResponse(data)
-        
-    except Exception as e:
-        logger.error(f"API Error: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'error': 'Internal server error'
-        }, status=500)
-    
 
 
 @login_required(login_url='app:login')
 def conflict_dashboard(request):
-    # Base queryset
+
     conflicts = Conflict.objects.all()
     
-    # Main aggregations
     yearly_data = list(conflicts.values('year').annotate(
         total=Count('conflict_id'),
         type1=Count('conflict_id', filter=Q(type_of_conflict=1)),
@@ -450,85 +390,11 @@ def conflicts_vs_commodities(request):
         total=Count('conflict_id')
     ).order_by('year'))
     
-    # Prepare commodity list
     commodities = []
 
-    commodity_fields = [
-        ('crude_oil_average_bbl', 'Crude Oil Average'),
-        ('crude_oil_brent_bbl', 'Crude Oil Brent'),
-        ('crude_oil_dubai_bbl', 'Crude Oil Dubai'),
-        ('crude_oil_wti_bbl', 'Crude Oil WTI'),
-        ('coal_australian_mt', 'Coal Australian'),
-        ('coal_south_african_mt', 'Coal South African'),
-        ('natural_gas_us_mmbtu', 'Natural Gas US'),
-        ('natural_gas_europe_mmbtu', 'Natural Gas Europe'),
-        ('liquefied_natural_gas_japan_mmbtu', 'Liquefied Natural Gas Japan'),
-        ('natural_gas_index_2010_100', 'Natural Gas Index (2010=100)'),
-        ('cocoa', 'Cocoa'),
-        ('coffee_arabica_kg', 'Coffee Arabica'),
-        ('coffee_robusta_kg', 'Coffee Robusta'),
-        ('tea_avg_3_auctions_kg', 'Tea Avg 3 Auctions'),
-        ('tea_colombo_kg', 'Tea Colombo'),
-        ('tea_kolkata_kg', 'Tea Kolkata'),
-        ('tea_mombasa_kg', 'Tea Mombasa'),
-        ('coconut_oil_mt', 'Coconut Oil'),
-        ('groundnuts_mt', 'Groundnuts'),
-        ('fish_meal_mt', 'Fish Meal'),
-        ('groundnut_oil_mt', 'Groundnut Oil'),
-        ('palm_oil_mt', 'Palm Oil'),
-        ('palm_kernel_oil_mt', 'Palm Kernel Oil'),
-        ('soybeans_mt', 'Soybeans'),
-        ('soybean_oil_mt', 'Soybean Oil'),
-        ('soybean_meal_mt', 'Soybean Meal'),
-        ('barley_mt', 'Barley'),
-        ('maize_mt', 'Maize'),
-        ('sorghum_mt', 'Sorghum'),
-        ('rice_thai_5_mt', 'Rice Thai 5'),
-        ('rice_thai_25_mt', 'Rice Thai 25'),
-        ('rice_thai_a_1_mt', 'Rice Thai A 1'),
-        ('rice_vietnamese_5_mt', 'Rice Vietnamese 5'),
-        ('wheat_us_srw_mt', 'Wheat US SRW'),
-        ('wheat_us_hrw_mt', 'Wheat US HRW'),
-        ('banana_europe_kg', 'Banana Europe'),
-        ('banana_us_kg', 'Banana US'),
-        ('orange_kg', 'Orange'),
-        ('beef_kg', 'Beef'),
-        ('chicken_kg', 'Chicken'),
-        ('lamb_kg', 'Lamb'),
-        ('shrimps_mexican_kg', 'Shrimps Mexican'),
-        ('sugar_eu_kg', 'Sugar EU'),
-        ('sugar_us_kg', 'Sugar US'),
-        ('sugar_world_kg', 'Sugar World'),
-        ('tobacco_us_import_uv_mt', 'Tobacco US Import UV'),
-        ('logs_cameroon_cubic_meter', 'Logs Cameroon'),
-        ('logs_malaysian_cubic_meter', 'Logs Malaysian'),
-        ('sawnwood_cameroon_cubic_meter', 'Sawnwood Cameroon'),
-        ('sawnwood_malaysian_cubic_meter', 'Sawnwood Malaysian'),
-        ('plywood_sheet', 'Plywood'),
-        ('cotton_a_index_kg', 'Cotton A Index'),
-        ('rubber_tsr20_kg', 'Rubber TSR20'),
-        ('rubber_rss3_kg', 'Rubber RSS3'),
-        ('phosphate_rock_mt', 'Phosphate Rock'),
-        ('dap_mt', 'DAP'),
-        ('tsp_mt', 'TSP'),
-        ('urea_mt', 'Urea'),
-        ('potassium_chloride_mt', 'Potassium Chloride'),
-        ('aluminum_mt', 'Aluminum'),
-        ('iron_ore_cfr_spot_mt', 'Iron Ore CFR Spot'),
-        ('copper_mt', 'Copper'),
-        ('lead_mt', 'Lead'),
-        ('tin_mt', 'Tin'),
-        ('nickel_mt', 'Nickel'),
-        ('zinc_mt', 'Zinc'),
-        ('gold_troy_oz', 'Gold'),
-        ('platinum_troy_oz', 'Platinum'),
-        ('silver_troy_oz', 'Silver')
-    ]
     
-    # Check which commodities have data
     for field, name in commodity_fields:
         if hasattr(Commodity, field):
-            # Check if any records have data for this field
             filter_kwargs = {f'{field}__isnull': False}
             if Commodity.objects.filter(**filter_kwargs).exists():
                 commodities.append({'field': field, 'name': name})
@@ -540,3 +406,4 @@ def conflicts_vs_commodities(request):
         'commodity_fields': commodity_fields}
     
     return render(request, 'conflicts_vs_commodities.html', context)
+

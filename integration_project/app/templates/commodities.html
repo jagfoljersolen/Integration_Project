@@ -56,28 +56,102 @@
 <script>
     let chartInstance = null;
     const unitMap = {
+        // Energy commodities
+       'crude_oil_average_bbl': '$/bbl',
+       'crude_oil_brent_bbl': '$/bbl',
+       'crude_oil_dubai_bbl': '$/bbl',
+        'crude_oil_wti_bbl': '$/bbl',
+
+        // Coal
+       'coal_australian_mt': '$/mt',
+       'coal_south_african_mt': '$/mt',
+
+        // Natural Gas
+        'natural_gas_us_mmbtu': '$/mmbtu',
+        'natural_gas_europe_mmbtu': '$/mmbtu',
+        'liquefied_natural_gas_japan_mmbtu': '$/mmbtu',
+        'natural_gas_index_2010_100': '(2010=100)', // No currency unit
+
+        // Agricultural - Beverages
         'cocoa': '$/kg',
         'coffee_arabica_kg': '$/kg',
         'coffee_robusta_kg': '$/kg',
-        'crude_oil_average_bbl': '$/bbl',
-        'gold_troy_oz': '$/oz',
-        'silver_troy_oz': '$/oz',
-        'aluminum_mt': '$/mt',
-        'copper_mt': '$/mt',
-        'wheat_us_srw_mt': '$/mt',
-        'maize_mt': '$/mt',
-        'rice_thai_5_mt': '$/mt',
+        'tea_avg_3_auctions_kg': '$/kg',
+        'tea_colombo_kg': '$/kg',
+        'tea_kolkata_kg': '$/kg',
+        'tea_mombasa_kg': '$/kg',
+
+        // Oils and meals
+        'coconut_oil_mt': '$/mt',
+        'groundnuts_mt': '$/mt',
+        'fish_meal_mt': '$/mt',
+        'groundnut_oil_mt': '$/mt',
         'palm_oil_mt': '$/mt',
+        'palm_kernel_oil_mt': '$/mt',
         'soybeans_mt': '$/mt',
-        'sugar_world_kg': '$/kg',
+        'soybean_oil_mt': '$/mt',
+        'soybean_meal_mt': '$/mt',
+
+        // Grains
+        'barley_mt': '$/mt',
+        'maize_mt': '$/mt',
+        'sorghum_mt': '$/mt',
+        'rice_thai_5_mt': '$/mt',
+        'rice_thai_25_mt': '$/mt',
+        'rice_thai_a_1_mt': '$/mt',
+        'rice_vietnamese_5_mt': '$/mt',
+        'wheat_us_srw_mt': '$/mt',
+        'wheat_us_hrw_mt': '$/mt',
+
+        // Other food
+        'banana_europe_kg': '$/kg',
+        'banana_us_kg': '$/kg',
+        'orange_kg': '$/kg',
         'beef_kg': '$/kg',
-        'chicken_kg': '$/kg'
+        'chicken_kg': '$/kg',
+        'lamb_kg': '$/kg',
+        'shrimps_mexican_kg': '$/kg',
+        'sugar_eu_kg': '$/kg',
+        'sugar_us_kg': '$/kg',
+        'sugar_world_kg': '$/kg',
+
+        // Raw materials
+        'tobacco_us_import_uv_mt': '$/mt',
+        'logs_cameroon_cubic_meter': '$/cubic meter',
+        'logs_malaysian_cubic_meter': '$/cubic meter',
+        'sawnwood_cameroon_cubic_meter': '$/cubic meter',
+        'sawnwood_malaysian_cubic_meter': '$/cubic meter',
+        'plywood_sheet': '¢/sheet',
+        'cotton_a_index_kg': '$/kg',
+        'rubber_tsr20_kg': '$/kg',
+        'rubber_rss3_kg': '$/kg',
+
+        // Fertilizers
+        'phosphate_rock_mt': '$/mt',
+        'dap_mt': '$/mt',
+        'tsp_mt': '$/mt',
+        'urea_mt': '$/mt',
+        'potassium_chloride_mt': '$/mt',
+
+        // Metals and minerals
+        'aluminum_mt': '$/mt',
+        'iron_ore_cfr_spot_mt': '$/mt',
+        'copper_mt': '$/mt',
+        'lead_mt': '$/mt',
+        'tin_mt': '$/mt',
+        'nickel_mt': '$/mt',
+        'zinc_mt': '$/mt',
+
+        // Precious metals
+        'gold_troy_oz': '$/troy oz',
+        'platinum_troy_oz': '$/troy oz',
+        'silver_troy_oz': '$/troy oz'
     };
 
     async function loadChart(commodity) {
         try {
             document.getElementById('loading').style.display = 'block';
-            const response = await fetch(`/api/commodity-data/?commodity=${commodity}`);
+            const response = await fetch(`/api/commodities/?commodity=${commodity}`);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`API Error (${response.status}): ${errorText}`);
