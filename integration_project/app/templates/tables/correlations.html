@@ -3,60 +3,238 @@
 {% block title %}correlations{% endblock title %}
 
 {% block content %}
+<!-- DataTables + Bootstrap 5 CSS -->
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css"
+/>
 
-<div class="mb-3">
-    <a
-        href="?table=commodities"
-        class="btn {% if current_table == 'commodities' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
-    >
-        Show Commodities
-    </a>
-    <a
-        href="?table=conflicts"
-        class="btn {% if current_table == 'conflicts' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
-    >
-        Show Conficts
-    </a>
-</div>
+<!-- jQuery, DataTables, Bootstrap JS, Buttons -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script
+  src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"
+></script>
+<script
+  src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"
+></script>
+<script
+  src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"
+></script>
+<script
+  src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"
+></script>
+<script
+  src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"
+></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- 1) Dropdown to pick join field -->
-<form method="get" class="mb-3">
-    <input type="hidden" name="table" value="join">
+<div class="container py-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <div>
+        <a
+          href="?table=commodities"
+          class="btn btn-sm {% if current_table == 'commodities' %}btn-light{% else %}btn-outline-light{% endif %}"
+        >Commodities</a>
+        <a
+          href="?table=conflicts"
+          class="btn btn-sm {% if current_table == 'conflicts' %}btn-light{% else %}btn-outline-light{% endif %}"
+        >Conflicts</a>
+      </div>
+      <form method="get" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="table" value="join">
+        <label for="join-select" class="text-white-50 mb-0">Join on:</label>
+        <select id="join-select" name="join_on" class="form-select form-select-sm">
+          {% for code, col in join_choices %}
+            <option value="{{ code }}" {% if code == current_join %}selected{% endif %}>
+              {{ col|capfirst }}
+            </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-light btn-sm">Reload</button>
+      </form>
+    </div>
 
-    <label for="join-select" class="form-label">Join on:</label>
-    <select id="join-select" name="join_on" class="form-select w-auto d-inline-block">
-        {% for code, col in join_choices %}
-        <option value="{{ code }}" {% if code == current_join %}selected{% endif %}>
-            {{ col|capfirst }}
-        </option>
-        {% endfor %}
-    </select>
-    <button type="submit" class="btn btn-primary btn-sm ms-2">Reload</button>
-</form>
+    <div class="card-body">
+      {% if rows %}
+        <div class="d-flex justify-content-between mb-2">
+          <!-- Columns toggle dropdown -->
+          <div class="dropdown">
+            <button
+              class="btn btn-outline-secondary btn-sm dropdown-toggle"
+              type="button"
+              id="columnsDropdown"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >Columns</button>
+            <ul
+              class="dropdown-menu p-3"
+              aria-labelledby="columnsDropdown"
+              style="max-height:300px; overflow-y:auto; min-width: 200px;"
+            >
+              <li class="mb-2">
+                <button type="button" class="btn btn-sm btn-link p-0 me-3" id="check-all">Mark All</button>
+                <button type="button" class="btn btn-sm btn-link p-0" id="uncheck-all">Unmark All</button>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              {% for header in column_verbose_names %}
+                <li class="form-check">
+                  <input
+                    class="form-check-input column-toggle"
+                    type="checkbox"
+                    value="{{ forloop.counter0 }}"
+                    id="colToggle{{ forloop.counter0 }}"
+                    checked
+                  />
+                  <label class="form-check-label" for="colToggle{{ forloop.counter0 }}">
+                    {{ header }}
+                  </label>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <!-- Export buttons placeholder -->
+          <div id="dt-export-buttons"></div>
+        </div>
 
-{% if rows %}
-<div class='table-responsive'>
-    <table class='table table-sm table-dark table-striped table-bordered'>
-        <thead class="thead-dark">
-            <tr>
-                {% for column_name in column_verbose_names %}
-                    <th class='text-nowrap' scope='col'> {{column_name|capfirst}} </th>
+        <div class="table-responsive">
+          <table
+            id="my-table"
+            class="table table-striped table-bordered table-hover align-middle mb-0"
+            style="width:100%;"
+          >
+            <thead class="table-light">
+              <tr>
+                {% for header in column_verbose_names %}
+                  <th class="text-nowrap">{{ header|capfirst }}</th>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in rows %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
                 <tr>
-                    {% for cell_value in row.values %}
-                        <td>{{cell_value}}</td>
-                    {% endfor %}
+                  {% for cell in row.values %}
+                    <td>{{ cell }}</td>
+                  {% endfor %}
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-center text-muted mt-4">
+          No rows found in the {{ current_table|capfirst }} table.
+        </p>
+      {% endif %}
+    </div>
+  </div>
 </div>
-{% else %}
-    <p class='text-muted'> No rows found in the {{current_table|capfirst}}. </p>
-{% endif %}
 
+<script>
+  $(function() {
+    // Destroy prior instance if exists
+    if ($.fn.DataTable.isDataTable('#my-table')) {
+      $('#my-table').DataTable().destroy();
+    }
+
+    // Initialize DataTable with JSON/XML export
+    var table = $('#my-table').DataTable({
+      paging:    true,
+      searching: true,
+      ordering:  true,
+      autoWidth: false,
+      stateSave: true,
+      order: [[0, 'asc']],
+      dom: 'Bfrtip',
+      buttons: [
+        {
+          text: 'Download JSON',
+          className: 'btn btn-light btn-sm',
+          action: function (e, dt) {
+            var data = dt.buttons.exportData({
+              columns: ':visible',
+              modifier: { search: 'applied' }
+            });
+            var arr = data.body.map(function(row) {
+              var obj = {};
+              data.header.forEach(function(title, i) {
+                obj[title] = row[i];
+              });
+              return obj;
+            });
+            var blob = new Blob([JSON.stringify(arr, null, 2)], {type: 'application/json'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        },
+        {
+          text: 'Download XML',
+          className: 'btn btn-light btn-sm',
+          action: function (e, dt) {
+            var data = dt.buttons.exportData({
+              columns: ':visible',
+              modifier: { search: 'applied' }
+            });
+            var xml = '<?xml version="1.0" encoding="UTF-8"?><rows>';
+            data.body.forEach(function(row) {
+              xml += '<row>';
+              data.header.forEach(function(title, i) {
+                var tag = title.replace(/\s+/g,'_').replace(/[^\w\-]/g,'');
+                var value = row[i] != null ? row[i] : '';
+                value = value
+                  .replace(/&/g,'&amp;')
+                  .replace(/</g,'&lt;')
+                  .replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;')
+                  .replace(/'/g,'&apos;');
+                xml += '<' + tag + '>' + value + '</' + tag + '>';
+              });
+              xml += '</row>';
+            });
+            xml += '</rows>';
+            var blob = new Blob([xml], {type: 'application/xml'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        }
+      ]
+    });
+
+    // Move export buttons into our placeholder
+    table.buttons().container().appendTo('#dt-export-buttons');
+
+    // Column visibility toggles
+    $('.column-toggle').on('change', function() {
+      var idx = parseInt(this.value, 10);
+      table.column(idx).visible(this.checked);
+    });
+
+    // Mark/unmark all
+    $('#check-all').on('click', function(){
+      $('.column-toggle').prop('checked', true);
+      table.columns().visible(true);
+    });
+    $('#uncheck-all').on('click', function(){
+      $('.column-toggle').prop('checked', false);
+      table.columns().visible(false);
+    });
+  });
+</script>
 {% endblock content %}

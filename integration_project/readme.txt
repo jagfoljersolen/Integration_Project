@@ -1,6 +1,9 @@
 venv
 https://stackoverflow.com/questions/42733542/how-to-use-the-same-python-virtualenv-on-both-windows-and-linux
 
+JQuery
+https://www.jqueryscript.net/table/jQuery-Plugin-For-Draggable-Resizable-Table-Columns-colResizable.html
+
 pip freeze > requirements.txt
 
 [linux]
@@ -31,3 +34,8 @@ admin@dmin.com
 admin1234
 
 main entrypoint: http://localhost:8000/correlations/
+
+users
+john_kler
+jfk@gmail.com
+johnFuckingKler
