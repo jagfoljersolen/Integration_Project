@@ -33,7 +33,7 @@ admin
 admin@dmin.com
 admin1234
 
-main entrypoint: http://localhost:8000/correlations/
+main entrypoint: http://localhost:8000/
 
 users
 john_kler

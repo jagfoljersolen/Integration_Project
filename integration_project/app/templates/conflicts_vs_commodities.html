@@ -51,7 +51,7 @@ h1 {
     </div>
     <div id="loading" class="loading">Loading data...</div>
 </div>
-<!-- <div class="chart-card">
+<div class="chart-card">
     <h1>Commodity-Conflict Correlation Heatmap</h1>
     <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
         Correlation between annual global conflict counts and commodity prices (1960-2023)
@@ -114,9 +114,13 @@ h1 {
             <span style="font-size: 13px;">Negative (≤0)</span>
         </div>
     </div>
-</div> -->
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@latest/dist/chartjs-chart-matrix.min.js"></script>
+{{ corr_matrix|json_script:"corr-matrix-data" }}
+{{ corr_labels|json_script:"corr-labels-data" }}
 <script>
     let chartInstance = null;
     const unitMap = {
@@ -341,6 +345,76 @@ h1 {
         document.getElementById('commoditySelect').addEventListener('change', (e) => {
             loadComparison(e.target.value);
         });
+
+
+        //HEATMAP----------------------
+        const corrMatrix = JSON.parse(document.getElementById('corr-matrix-data').textContent);
+        const corrLabels = JSON.parse(document.getElementById('corr-labels-data').textContent);
+        
+        const ctx = document.getElementById('correlationHeatmap').getContext('2d');
+new Chart(ctx, {
+  type: 'matrix',
+  data: {
+    datasets: [{
+      data: corrMatrix.map((row, i) => row.map((value, j) => ({
+        x: corrLabels[j],
+        y: corrLabels[i],
+        v: value
+      }))).flat(),
+      label: 'Correlation',
+      backgroundColor: function(context) {
+        const value = context.dataset.data[context.dataIndex].v;
+        if (value > 0.5) return 'rgba(220, 20, 60, 0.8)';
+        if (value > 0.3) return 'rgba(255, 165, 0, 0.6)';
+        if (value > 0) return 'rgba(255, 165, 0, 0.3)';
+        return 'rgba(70, 130, 180, 0.6)';
+      },
+      borderColor: 'rgba(0,0,0,0.1)',
+      borderWidth: 1,
+      // Use static values instead of dynamic chart area calculations
+      width: 40,
+      height: 40
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: function(context) {
+            return `${context[0].raw.y} vs ${context[0].raw.x}`;
+          },
+          label: function(context) {
+            return `Correlation: ${context.raw.v.toFixed(3)}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        type: 'category',
+        labels: corrLabels,
+        offset: true,
+        ticks: {
+          autoSkip: false
+        }
+      },
+      y: {
+        display: true,
+        type: 'category',
+        labels: corrLabels,
+        offset: true,
+        ticks: {
+          autoSkip: false
+        }
+      }
+    }
+  }
+});
+
     </script>
     
 {% endblock content %}
