@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}correlations{% endblock title %}
+{% block title %}| Correlations{% endblock title %}
 
 {% block content %}
 <!-- DataTables + Bootstrap 5 CSS -->
@@ -100,8 +100,14 @@
               {% endfor %}
             </ul>
           </div>
+          <div id="table-toolbar" class="d-flex align-items-end mb-2">
+            <!-- Export buttons will go to the right -->
+            <div id="dt-export-buttons"></div>
+            <!-- Filter box will go to the left -->
+            <div id="dt-global-filter"></div>
+          </div>
           <!-- Export buttons placeholder -->
-          <div id="dt-export-buttons"></div>
+          <!-- <div id="dt-export-buttons"></div> -->
         </div>
 
         <div class="table-responsive">
@@ -219,6 +225,14 @@
 
     // Move export buttons into our placeholder
     table.buttons().container().appendTo('#dt-export-buttons');
+
+    // 2) Detach the existing search box and append to your toolbar
+    //    This finds the default filter from DataTables and moves it.
+    $('.dataTables_filter').appendTo('#dt-global-filter');
+
+    // 3) (Optional) Tweak classes so it fits nicely:
+    $('#dt-global-filter .dataTables_filter').addClass('mb-0');
+    $('#dt-global-filter input').addClass('form-control form-control-sm');
 
     // Column visibility toggles
     $('.column-toggle').on('change', function() {

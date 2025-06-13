@@ -13,6 +13,48 @@ from django.contrib.auth.models import auth
 from django.contrib.auth import authenticate, logout
 from django.contrib.auth.decorators import login_required
 
+from django.db import connection, transaction
+from functools import wraps
+
+from enum import Enum, unique
+
+
+@unique
+class IsolationLevel(Enum):
+    READ_UNCOMMITTED = "READ UNCOMMITTED"
+    READ_COMMITTED   = "READ COMMITTED"
+    REPEATABLE_READ  = "REPEATABLE READ"
+    SERIALIZABLE     = "SERIALIZABLE"
+
+    def __str__(self):
+        # dla wygody, gdy będziesz wypisywać IsolationLevel.READ_COMMITTED
+        return self.value
+
+
+def transactional(isolation:IsolationLevel=IsolationLevel.READ_COMMITTED, read_only=True, timeout=None):
+    """
+    Function decorator for performing parametrized transactions.
+
+    isolation: isolation level 'READ UNCOMMITED' | 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABLE'
+    read_only: True | False
+    timeout: maximum transaction duration in miliseconds
+    """
+    def deco(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            with transaction.atomic():
+                with connection.cursor() as cur:
+                    cur.execute(f"SET TRANSACTION ISOLATION LEVEL {isolation};")
+
+                    if read_only:
+                        cur.execute("SET TRANSACTION READ ONLY;")
+                    if timeout and isinstance(timeout, int):
+                        cur.execute(f"SET LOCAL statement_timeout = {timeout};")
+                return fn(*args, **kwargs)
+        return wrapper
+    return deco
+
+@transactional(timeout=10000)
 @login_required(login_url='app:login')
 def main_dashboard(request):
     """
@@ -26,8 +68,6 @@ def main_dashboard(request):
     latest_commodity_year = Commodity.objects.aggregate(Max('year'))['year__max']
     latest_conflict_year = Conflict.objects.aggregate(Max('year'))['year__max']
     
-    
-    
     context = {
         'total_commodities': total_commodities,
         'total_conflicts': total_conflicts,
@@ -38,6 +78,7 @@ def main_dashboard(request):
     
     return render(request, 'main_dashboard.html', context)
 
+@transactional(timeout=10000)
 @login_required(login_url='app:login')
 def dashboard_commodity_api(request):
     """
@@ -63,6 +104,7 @@ def dashboard_commodity_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+@transactional(timeout=30000)
 @login_required(login_url='app:login')
 def dashboard_conflict_api(request):
     """
@@ -151,6 +193,7 @@ class CorrelationView(TemplateView):
         "year" : "year"
     }
 
+    @transactional(timeout=10000)
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
@@ -310,6 +353,7 @@ commodity_fields = [
     ]
 
 
+@transactional(timeout=10000)
 @login_required(login_url='app:login')
 def commodity_dashboard(request):
     
@@ -337,6 +381,7 @@ logger = logging.getLogger(__name__)
 
 
 
+@transactional(timeout=10000)
 @login_required(login_url='app:login')
 def conflict_dashboard(request):
 
@@ -367,6 +412,7 @@ def conflict_dashboard(request):
     return render(request, 'conflicts.html', context)
 
 
+@transactional(timeout=30000)
 @login_required(login_url='app:login')
 @require_GET
 def conflict_data_api(request):
@@ -381,6 +427,7 @@ def conflict_data_api(request):
     }) 
 
 
+@transactional(timeout=10000)
 @login_required(login_url='app:login')
 def conflicts_vs_commodities(request):
 
