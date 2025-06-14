@@ -35,6 +35,21 @@ h1 {
     padding: 20px;
     color: #666;
     }
+
+.heatmap-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 600px;
+}
+
+.heatmap-title {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 20px;
+}
 </style>
 
 <div class="chart-card">
@@ -51,76 +66,19 @@ h1 {
     </div>
     <div id="loading" class="loading">Loading data...</div>
 </div>
-<div class="chart-card">
-    <h1>Commodity-Conflict Correlation Heatmap</h1>
-    <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
-        Correlation between annual global conflict counts and commodity prices (1960-2023)
-    </p>
-    
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: flex; justify-content: space-around; flex-wrap: wrap;">
-        <div style="text-align: center; min-width: 120px; margin: 5px;">
-            <div style="font-size: 24px; font-weight: bold; color: #dc143c;">32</div>
-            <div style="font-size: 12px; color: #666;">Strong Positive (>0.5)</div>
-        </div>
-        <div style="text-align: center; min-width: 120px; margin: 5px;">
-            <div style="font-size: 24px; font-weight: bold; color: #ffa500;">25</div>
-            <div style="font-size: 12px; color: #666;">Moderate (0.3-0.5)</div>
-        </div>
-        <div style="text-align: center; min-width: 120px; margin: 5px;">
-            <div style="font-size: 24px; font-weight: bold; color: #4682b4;">5</div>
-            <div style="font-size: 12px; color: #666;">Negative (≤0)</div>
-        </div>
-        <div style="text-align: center; min-width: 120px; margin: 5px;">
-            <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">0.454</div>
-            <div style="font-size: 12px; color: #666;">Average Correlation</div>
-        </div>
+
+{% if heatmap_plot %}
+<div class="heatmap-container">
+    <h2 class="heatmap-title">Correlation Heatmap: Conflicts vs Commodity Prices</h2>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="data:image/png;base64,{{ heatmap_plot|safe }}" 
+             alt="Correlation Heatmap" 
+             style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
     </div>
-    
-    <div style="margin-bottom: 20px;">
-        <label for="heatmapType" style="font-weight: bold; margin-right: 10px;">Display:</label>
-        <select id="heatmapType" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 15px;">
-            <option value="top30">Top 30 Correlations</option>
-            <option value="all">All Commodities</option>
-        </select>
-        
-        <label for="sortOrder" style="font-weight: bold; margin-right: 10px;">Sort:</label>
-        <select id="sortOrder" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-            <option value="strength">By Correlation Strength</option>
-            <option value="alphabetical">Alphabetical</option>
-            <option value="positive">Positive First</option>
-        </select>
-    </div>
-    
-    <div class="chart-container" style="height: 800px;">
-        <canvas id="correlationHeatmap"></canvas>
-    </div>
-    
-    
-    <div style="margin-top: 15px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap;">
-        <div style="margin: 5px 20px; display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background: rgba(220, 20, 60, 0.8); margin-right: 8px; border-radius: 3px;"></div>
-            <span style="font-size: 13px;">Strong Positive (>0.5)</span>
-        </div>
-        <div style="margin: 5px 20px; display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background: rgba(255, 165, 0, 0.6); margin-right: 8px; border-radius: 3px;"></div>
-            <span style="font-size: 13px;">Moderate (0.3-0.5)</span>
-        </div>
-        <div style="margin: 5px 20px; display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background: rgba(255, 165, 0, 0.3); margin-right: 8px; border-radius: 3px;"></div>
-            <span style="font-size: 13px;">Weak Positive (0-0.3)</span>
-        </div>
-        <div style="margin: 5px 20px; display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background: rgba(70, 130, 180, 0.6); margin-right: 8px; border-radius: 3px;"></div>
-            <span style="font-size: 13px;">Negative (≤0)</span>
-        </div>
-    </div>
-</div>
+{% endif %}
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@latest/dist/chartjs-chart-matrix.min.js"></script>
-{{ corr_matrix|json_script:"corr-matrix-data" }}
-{{ corr_labels|json_script:"corr-labels-data" }}
 <script>
     let chartInstance = null;
     const unitMap = {
@@ -347,73 +305,7 @@ h1 {
         });
 
 
-        //HEATMAP----------------------
-        const corrMatrix = JSON.parse(document.getElementById('corr-matrix-data').textContent);
-        const corrLabels = JSON.parse(document.getElementById('corr-labels-data').textContent);
         
-        const ctx = document.getElementById('correlationHeatmap').getContext('2d');
-new Chart(ctx, {
-  type: 'matrix',
-  data: {
-    datasets: [{
-      data: corrMatrix.map((row, i) => row.map((value, j) => ({
-        x: corrLabels[j],
-        y: corrLabels[i],
-        v: value
-      }))).flat(),
-      label: 'Correlation',
-      backgroundColor: function(context) {
-        const value = context.dataset.data[context.dataIndex].v;
-        if (value > 0.5) return 'rgba(220, 20, 60, 0.8)';
-        if (value > 0.3) return 'rgba(255, 165, 0, 0.6)';
-        if (value > 0) return 'rgba(255, 165, 0, 0.3)';
-        return 'rgba(70, 130, 180, 0.6)';
-      },
-      borderColor: 'rgba(0,0,0,0.1)',
-      borderWidth: 1,
-      // Use static values instead of dynamic chart area calculations
-      width: 40,
-      height: 40
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          title: function(context) {
-            return `${context[0].raw.y} vs ${context[0].raw.x}`;
-          },
-          label: function(context) {
-            return `Correlation: ${context.raw.v.toFixed(3)}`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        display: true,
-        type: 'category',
-        labels: corrLabels,
-        offset: true,
-        ticks: {
-          autoSkip: false
-        }
-      },
-      y: {
-        display: true,
-        type: 'category',
-        labels: corrLabels,
-        offset: true,
-        ticks: {
-          autoSkip: false
-        }
-      }
-    }
-  }
-});
 
     </script>
     

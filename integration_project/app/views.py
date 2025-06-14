@@ -7,6 +7,12 @@ from django.views.decorators.http import require_GET
 import logging
 from django.db.models import Count, Q, Avg, Max, Min
 import json
+import pandas as pd
+import numpy as np
+from scipy.stats import spearmanr
+import io
+import base64
+import matplotlib.pyplot as plt
 
 from .forms import CreateUserForm, CreateLoginForm
 from django.contrib.auth.models import auth
@@ -446,11 +452,142 @@ def conflicts_vs_commodities(request):
             if Commodity.objects.filter(**filter_kwargs).exists():
                 commodities.append({'field': field, 'name': name})
     
+
+    heatmap_data = generate_correlation_heatmap()
+
     context = {
         'yearly_data': yearly_data,
         'commodities': commodities,
         'default_commodity': 'cocoa' if commodities else None,
-        'commodity_fields': commodity_fields}
+        'commodity_fields': commodity_fields,
+        'heatmap_plot': heatmap_data['plot_url']
+        }
     
     return render(request, 'conflicts_vs_commodities.html', context)
 
+
+# views.py
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import Count, Avg, Sum
+from .models import Conflict, Commodity
+import base64
+from io import BytesIO
+import matplotlib
+matplotlib.use('Agg')
+
+
+
+
+def generate_correlation_heatmap():
+    
+    try:
+        # Extract and aggregate conflict data by year
+        conflicts = Conflict.objects.all().values(
+            'year', 'intensity_level', 'cumulative_intensity', 
+            'type_of_conflict', 'location'
+        )
+        
+        conflict_by_year = {}
+        for conflict in conflicts:
+            year = conflict['year']
+            if year not in conflict_by_year:
+                conflict_by_year[year] = {
+                    'year': year,
+                    'total_conflicts': 0,
+                    'avg_intensity': 0,
+                    'total_cumulative_intensity': 0,
+                }
+            
+            conflict_by_year[year]['total_conflicts'] += 1
+            conflict_by_year[year]['avg_intensity'] += conflict['intensity_level'] or 0
+            conflict_by_year[year]['total_cumulative_intensity'] += conflict['cumulative_intensity'] or 0
+        
+        # Calculate averages and create DataFrame
+        for year_data in conflict_by_year.values():
+            if year_data['total_conflicts'] > 0:
+                year_data['avg_intensity'] /= year_data['total_conflicts']
+
+        # Extract commodity data
+        commodities = Commodity.objects.all().values()
+        commodity_df = pd.DataFrame(list(commodities))
+        
+        # Create conflict DataFrame
+        conflict_df = pd.DataFrame([
+            {
+                'year': data['year'],
+                'total_conflicts': data['total_conflicts'],
+                'avg_intensity': data['avg_intensity'],
+                'total_cumulative_intensity': data['total_cumulative_intensity']            }
+            for data in conflict_by_year.values()
+        ])
+        
+        # Merge datasets on year
+        merged_df = pd.merge(conflict_df, commodity_df, on='year', how='inner')
+        
+        conflict_cols = ['total_conflicts', 'avg_intensity', 'total_cumulative_intensity']
+
+        key_commodity_cols = [
+            'crude_oil_average_bbl', 'natural_gas_us_mmbtu', 'gold_troy_oz', 
+            'copper_mt', 'wheat_us_srw_mt', 'maize_mt', 'cocoa', 'coffee_arabica_kg',
+            'crude_oil_brent_bbl', 'crude_oil_dubai_bbl', 'crude_oil_wti_bbl',
+            'coal_australian_mt', 'coal_south_african_mt', 'natural_gas_europe_mmbtu',
+            'liquefied_natural_gas_japan_mmbtu', 'natural_gas_index_2010_100', 'coffee_robusta_kg',
+            'tea_avg_3_auctions_kg', 'tea_colombo_kg', 'tea_kolkata_kg', 'tea_mombasa_kg',
+            'coconut_oil_mt', 'groundnuts_mt', 'fish_meal_mt', 'groundnut_oil_mt', 'palm_oil_mt',
+            'palm_kernel_oil_mt', 'soybeans_mt', 'soybean_oil_mt', 'soybean_meal_mt', 'barley_mt',
+            'sorghum_mt', 'rice_thai_25_mt', 'rice_thai_a_1_mt', 'rice_vietnamese_5_mt', 'wheat_us_hrw_mt',
+            'banana_europe_kg', 'banana_us_kg', 'orange_kg', 'beef_kg', 'chicken_kg', 'lamb_kg',
+            'shrimps_mexican_kg', 'sugar_eu_kg', 'sugar_us_kg', 'sugar_world_kg', 'tobacco_us_import_uv_mt',
+            'logs_cameroon_cubic_meter', 'logs_malaysian_cubic_meter', 'sawnwood_cameroon_cubic_meter',
+            'sawnwood_malaysian_cubic_meter', 'plywood_sheet', 'cotton_a_index_kg', 'rubber_tsr20_kg',
+            'rubber_rss3_kg', 'phosphate_rock_mt', 'dap_mt', 'tsp_mt', 'urea_mt', 'potassium_chloride_mt',
+            'aluminum_mt', 'iron_ore_cfr_spot_mt', 'lead_mt', 'tin_mt', 'nickel_mt', 'zinc_mt',
+            'platinum_troy_oz', 'silver_troy_oz'
+        ]
+
+        
+        available_commodity_cols = [col for col in key_commodity_cols if col in merged_df.columns]
+        correlation_data = merged_df[conflict_cols + available_commodity_cols].corr()
+        conflict_commodity_corr = correlation_data.loc[conflict_cols, available_commodity_cols]     
+
+        # Generate heatmap
+        plt.figure(figsize=(min(2 + len(available_commodity_cols) * 0.5, 40), 10))        
+        sns.heatmap(
+            conflict_commodity_corr,            
+            annot=True, 
+            cmap='RdBu_r', 
+            center=0,
+            square=False,
+            linewidths=0.5,
+            fmt='.2f',
+            annot_kws={"size": 10}
+        )
+        plt.xticks(rotation=45, ha='right', fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.title('Correlation Heatmap: Conflicts vs Commodity Prices', fontsize=18, pad=20)
+        plt.tight_layout()
+        
+        # Convert to base64 for web display
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
+        buffer.seek(0)
+        plot_data = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        plot_url = base64.b64encode(plot_data).decode()
+        
+        # Identify strongest correlations
+        conflict_commodity_corr = correlation_data.loc[conflict_cols, available_commodity_cols]
+        
+        return {
+            'plot_url': plot_url
+        }
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e), 'success': False})

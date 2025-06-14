@@ -108,7 +108,7 @@ class Commodity(models.Model):
     phosphate_rock_mt = models.FloatField(null=True, blank=True, verbose_name="Phosphate Rock ($/mt)")
     dap_mt = models.FloatField(null=True, blank=True, verbose_name="DAP ($/mt)")
     tsp_mt = models.FloatField(null=True, blank=True, verbose_name="TSP ($/mt)")
-    urea_mt = models.FloatField(null=True, blank=True, verbose_name="Urea ($/mt)")
+    urea_mt = models.FloatField(null=True, blank=True, verbose_name="Urea ($/mt)") 
     potassium_chloride_mt = models.FloatField(null=True, blank=True, verbose_name="Potassium Chloride ($/mt)")
     
     # Metals and minerals
