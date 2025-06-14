@@ -8,11 +8,15 @@ import logging
 from django.db.models import Count, Q, Avg, Max, Min
 import json
 import pandas as pd
-import numpy as np
-from scipy.stats import spearmanr
-import io
 import base64
 import matplotlib.pyplot as plt
+import seaborn as sns
+from django.http import JsonResponse
+from io import BytesIO
+import matplotlib
+matplotlib.use('Agg')
+
+
 
 from .forms import CreateUserForm, CreateLoginForm
 from django.contrib.auth.models import auth
@@ -464,22 +468,6 @@ def conflicts_vs_commodities(request):
         }
     
     return render(request, 'conflicts_vs_commodities.html', context)
-
-
-# views.py
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.db.models import Count, Avg, Sum
-from .models import Conflict, Commodity
-import base64
-from io import BytesIO
-import matplotlib
-matplotlib.use('Agg')
-
 
 
 
