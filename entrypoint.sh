@@ -1,27 +1,37 @@
 #!/usr/bin/env sh
 set -e
 
-# 1) Wait for PostgreSQL to be ready
-until pg_isready -h "${DATABASE_HOST:-db}" -p "${DATABASE_PORT:-5432}"; do
-  echo "⏳ Waiting for Postgres..."
-  sleep 1
-done
+# 1) Wait for Postgres via Python
+echo "⏳ Waiting for Postgres..."
+python - <<'EOF'
+import os, time, psycopg
+conn_info = dict(
+    dbname=os.getenv("DATABASE_NAME"),
+    user=os.getenv("DATABASE_USER"),
+    password=os.getenv("DATABASE_PASSWORD"),
+    host=os.getenv("DATABASE_HOST", "db"),
+    port=os.getenv("DATABASE_PORT", "5432"),
+)
+while True:
+    try:
+        psycopg.connect(**conn_info).close()
+        break
+    except Exception:
+        time.sleep(1)
+EOF
 
-# 1.1) Switch into the Django project dir where manage.py lives
-cd integration_project
+# 2) cd into project
+cd /app/integration_project
 
-# 2) Run migrations
+# 3) Migrations & imports
 echo "🛠️  Applying migrations..."
 python manage.py migrate --noinput
 
-# 3) Load your CSV data
-echo "📥 Importing commodity_with_units..."
-python manage.py import_commodity_with_units data/commodity_with_units.csv
+echo "📥 Importing CSVs..."
+python manage.py import_commodity_with_units ./data/commodity_with_units.csv
+python manage.py import_conflicts ./data/conflicts.csv --batch-size 1000
 
-echo "📥 Importing conflicts..."
-python manage.py import_conflicts data/conflicts.csv --batch-size 1000
-
-# 4) Launch Gunicorn in 3 workers, binding all interfaces
+# 4) Start Gunicorn
 echo "🚀 Starting Gunicorn..."
 exec gunicorn integration_project.wsgi:application \
      --bind 0.0.0.0:8000 \

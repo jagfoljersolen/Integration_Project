@@ -1,30 +1,39 @@
-# Use official slim Python base
-FROM python:3.13.2-slim
+# ───────────────────────────────
+# 1) BUILDER STAGE
+# ───────────────────────────────
+FROM python:3.13.2-slim AS builder
 
-# Install OS-level deps for psycopg and any build tools
+# Install compilers & headers for building wheels
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        libpq-dev \
-        postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends \
+      build-essential libpq-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /install
+
+# Copy and install Python deps into /install
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt \
+ && pip install --no-cache-dir --prefix=/install gunicorn
+
+# ───────────────────────────────
+# 2) RUNTIME STAGE
+# ───────────────────────────────
+FROM python:3.13.2-slim
 
 WORKDIR /app
 
-# 1) Install Python deps (layer cached unless requirements.txt changes)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    # install Gunicorn for production
-    && pip install --no-cache-dir gunicorn
+# 2a) Copy pure Python environment (all site-packages, scripts, etc.)
+COPY --from=builder /install /usr/local
 
-# 2) Copy in project code
+# 2b) Copy application code
 COPY . .
 
-# 3) Make entrypoint executable
+# 2c) Entrypoint
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
-# Unbuffered logging
+# Ensure Python output is unbuffered (for live logs)
 ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT ["./entrypoint.sh"]
