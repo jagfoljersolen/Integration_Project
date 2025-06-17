@@ -3,9 +3,13 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_DB:       integration_db
-      POSTGRES_USER:     db_user
-      POSTGRES_PASSWORD: integration
+      POSTGRES_DB_FILE:       /run/secrets/db_name
+      POSTGRES_USER_FILE:     /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+      - db_user
+      - db_name
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -18,6 +22,14 @@ services:
       - "8000:8000"
     depends_on:
       - db
+
+secrets:
+  db_password:
+    file: ./db_password.txt
+  db_user:
+    file: ./db_user.txt
+  db_name:
+    file: ./db_name.txt
 
 volumes:
   db_data:

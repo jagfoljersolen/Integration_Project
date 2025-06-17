@@ -9,3 +9,8 @@ isenv/
 README.md
 Dockerfile
 docker-compose.yml
+
+# Secrets
+db_name.txt
+db_password.txt
+db_user.txt
