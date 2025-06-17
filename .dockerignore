@@ -1,3 +1,11 @@
 .env
 isenv/
+
+# Exclude Git metadata
+.git
 .gitignore
+
+# Docs & CI configs
+README.md
+Dockerfile
+docker-compose.yml

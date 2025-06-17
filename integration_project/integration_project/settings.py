@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-unsafe-key")
+SECRET_KEY = os.getenv("SECRET_KEY", "2dl6@a)(vdt0o4xfongaawc*4hko2=g+(t=@2v7%^pg2e95=#p")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -82,7 +82,7 @@ DATABASES = {
         "NAME":     os.getenv("DATABASE_NAME",     "integration_db"),
         "USER":     os.getenv("DATABASE_USER",     "db_user"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD", "integration"),
-        "HOST":     os.getenv("DATABASE_HOST",     "db"),
+        "HOST":     os.getenv("DATABASE_HOST",     "db"),   # aby uruchomić lokalnie (dev) zamienić hosta na "localhost"
         "PORT":     os.getenv("DATABASE_PORT",     "5432"),
     }
 }

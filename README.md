@@ -137,13 +137,4 @@ Projekt integruje dane o konfliktach zbrojnych i cenach surowców, oferując roz
 **9. Uruchom aplikację w przeglądarce**
 	
 		http://127.0.0.1:8000/
-		
-	
-   		
-		
-	
 
-	
-	
-		
-		
