@@ -73,6 +73,10 @@ The project integrates data on armed conflicts and commodity prices, offering ad
 	cp .env.example .env
 
 	(Edit .env if you need to change default credentials or ports.)
+ # Create Docker secrets for the database (required for Compose):
+	echo "integration" > db_password.txt
+	echo "db_user" > db_user.txt
+	echo "integration_db" > db_name.txt
 
 ## 3. Build and start the containers:
 
