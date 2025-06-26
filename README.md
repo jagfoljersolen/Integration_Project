@@ -1,20 +1,17 @@
 ## DATA INTEGRATION PROJECT
 
-## **Topic:**
+# Topic:
 Compiling data on past and ongoing armed conflicts with commodity prices.
 
-## **Project Goal:**
+# Project Goal:
 The goal of the project is to present two heterogeneous datasets—concerning armed conflicts and commodity prices—and to find relationships in seemingly unrelated data. The project analyzes how commodity prices may be linked to the intensity of armed conflicts based on historical data
 	
 # Project Description
 The project is based on two datasets:
-- Armed conflicts: https://www.prio.org/data/4
-  
-	Contains information about past and ongoing conflicts, their locations, durations, intensities, and involved parties.
-
-- Commodity prices: https://www.worldbank.org/en/research/commodity-markets
-  
- 	Selected dataset with prices of individual commodities for each year in the range 1960–2025.
+## - Armed conflicts: https://www.prio.org/data/4
+  Contains information about past and ongoing conflicts, their locations, durations, intensities, and involved parties.
+## Commodity prices: https://www.worldbank.org/en/research/commodity-markets
+  Selected dataset with prices of individual commodities for each year in the range 1960–2025.
   
 ## **Funkcjonalności**
 Projekt integruje dane o konfliktach zbrojnych i cenach surowców, oferując rozbudowane narzędzia analityczne i wizualizacyjne. Poniżej przedstawiono kluczowe funkcjonalności systemu:
