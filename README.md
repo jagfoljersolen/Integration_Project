@@ -73,8 +73,8 @@ The project integrates data on armed conflicts and commodity prices, offering ad
 ### **How to run the project**
 **1. Clone the project from GitHub https://github.com/jagfoljersolen/data-integration-project** 
 	
-	git clone https://github.com/jagfoljersolen/Integration_Project.git
-	cd Integration_Project
+	git clone https://github.com/jagfoljersolen/data-integration-project.git	
+ 	cd data-integration-project
 		
 **2. Create and activate a virtual environment**
 		
