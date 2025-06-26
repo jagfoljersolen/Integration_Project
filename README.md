@@ -58,7 +58,7 @@ The project integrates data on armed conflicts and commodity prices, offering ad
 - **Frontend:** JavaScript (szablony Django)
 - **Database:** PostgreSQL
 - **API:** Django REST Framework (REST API)
-- **Authentication:** Django Auth (system użytkowników i sesji), Django Admin Panel (zarządzanie danymi przez administratorów)
+- **Authentication:** Django Auth, Django Admin Panel
 - **ORM:** Django ORM
 - **Dependency management:** pip, requirements.txt
 	
