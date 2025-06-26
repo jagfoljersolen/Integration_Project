@@ -1,11 +1,5 @@
 ## DATA INTEGRATION PROJECT
 
-
-> **Looking for a containerized setup?**  
-> See the [`docker` branch](https://github.com/jagfoljersolen/data-integration-project/tree/docker) for Docker and Docker Compose deployment instructions.
-
-
-
 ## Topic:
 Compiling data on past and ongoing armed conflicts with commodity prices.
 
@@ -69,6 +63,11 @@ The project integrates data on armed conflicts and commodity prices, offering ad
 - **Dependency management:** pip, requirements.txt
 	
 ### **How to run the project**
+
+
+> **Looking for a containerized setup?**  
+> See the [`docker` branch](https://github.com/jagfoljersolen/data-integration-project/tree/docker) for Docker and Docker Compose deployment instructions.
+
 **1. Clone the project from GitHub https://github.com/jagfoljersolen/data-integration-project** 
 	
 	git clone https://github.com/jagfoljersolen/data-integration-project.git	
