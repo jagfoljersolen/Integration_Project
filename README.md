@@ -1,11 +1,9 @@
 ## DATA INTEGRATION PROJECT
 
 
-**
+> **Looking for a containerized setup?**  
+> See the [`docker` branch](https://github.com/jagfoljersolen/data-integration-project/tree/docker) for Docker and Docker Compose deployment instructions.
 
-    For a fully containerized version of this project, see the docker branch.
-
-**
 
 
 ## Topic:
