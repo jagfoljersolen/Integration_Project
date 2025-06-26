@@ -1,9 +1,9 @@
-## PROJEKT INTEGRACYJNY
+## INTEGRATION PROJECT
 
-### **Temat:**
-Zestawianie danych na temat minionych i trwających konfliktów zbrojnych z cenami surowców.
+## **Topic:**
+Compiling data on past and ongoing armed conflicts with commodity prices.
 
-### **Cel projektu:**
+## **Project Goal:**
 Celem projektu jest przedstawienie dwóch heterogenicznych zbiorów danych – dotyczących konfliktów zbrojnych oraz cen surowców – i znalezienie zależności w pozornie niezależnych zbiorach danych. Projekt analizuje, jak ceny surowców mogą być powiązane z intensywnością konfliktów zbrojnych na podstawie danych historycznych.
 	
 ## **Opis projektu**
