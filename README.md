@@ -1,10 +1,11 @@
 ## DATA INTEGRATION PROJECT
 
 
-    Dockerized Setup
+**
 
     For a fully containerized version of this project, see the docker branch.
-    This branch includes Docker and Docker Compose configurations for easy deployment.
+
+**
 
 
 ## Topic:
