@@ -45,8 +45,8 @@ The project integrates data on armed conflicts and commodity prices, offering ad
    
 - **4. REST API for dashboards**
 	- API for retrieving commodity and conflict data, used by the frontend for dynamic visualizations
- - 
-<img width="1047" height="544" alt="image" src="https://github.com/user-attachments/assets/d6c5f8d0-1c56-469c-8a4c-7f8403189e38" />
+   
+	<img width="1047" height="544" alt="image" src="https://github.com/user-attachments/assets/d6c5f8d0-1c56-469c-8a4c-7f8403189e38" />
 
  
 - **5. Tables and reports**
