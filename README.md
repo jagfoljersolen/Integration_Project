@@ -19,45 +19,54 @@ The project integrates data on armed conflicts and commodity prices, offering ad
 - **1. Main dashboard**
 	- Presents a summary of the number of years with commodity and conflict data, the latest available years, and the historical data range.
 	- Aggregates statistics from both datasets and enables a quick overview of the database status.
-   
-   <img width="1915" height="264" alt="image" src="https://github.com/user-attachments/assets/981e4924-11c3-45b5-b9d4-99e9986105b2" />
+
+
+  	<img width="1915" height="264" alt="image" src="https://github.com/user-attachments/assets/981e4924-11c3-45b5-b9d4-99e9986105b2" />
+
 
 - **2. Commodity dashboard**
 	- List of available commodities (e.g., oil, gas, metals, agricultural products) and visualization of their prices over time.
 	- Dynamic data fetching for the selected commodity for charts and analyses.
 
-<img width="1920" height="865" alt="image" src="https://github.com/user-attachments/assets/ffbbb786-251a-4fd0-b294-6333f315dfbc" />
+
+	<img width="1920" height="865" alt="image" src="https://github.com/user-attachments/assets/ffbbb786-251a-4fd0-b294-6333f315dfbc" />
+
 
 - **3. Conflict dashboard**
 	- Statistics on armed conflicts by year, type, and intensity level.
 	- Graphical data representation.
    
-<img width="1920" height="502" alt="image" src="https://github.com/user-attachments/assets/49d1d6ec-fd80-43e4-bb1a-048e9f43f5c6" />
-<img width="1920" height="897" alt="image" src="https://github.com/user-attachments/assets/5d5560db-cd29-4ead-ab63-fbe7095ecaa0" />
-		
+	<img width="1920" height="502" alt="image" src="https://github.com/user-attachments/assets/49d1d6ec-fd80-43e4-bb1a-048e9f43f5c6" />
+ 
+	<img width="1920" height="897" alt="image" src="https://github.com/user-attachments/assets/5d5560db-cd29-4ead-ab63-fbe7095ecaa0" />
+
+   
 - **4. REST API for dashboards**
 	- API for retrieving commodity and conflict data, used by the frontend for dynamic visualizations
  - 
 <img width="1047" height="544" alt="image" src="https://github.com/user-attachments/assets/d6c5f8d0-1c56-469c-8a4c-7f8403189e38" />
+
  
 - **5. Tables and reports**
 	- Browse tables with commodity data, conflict data, or their joined reports (e.g., by year).
 	- Select displayed columns.
 	- Search by name.
- - 
-<img width="1186" height="677" alt="image" src="https://github.com/user-attachments/assets/fd4b5c2c-c9b7-40c1-99fc-d57542d3fbd9" />
+   
+	<img width="1186" height="677" alt="image" src="https://github.com/user-attachments/assets/fd4b5c2c-c9b7-40c1-99fc-d57542d3fbd9" />
 
 		
 - **6. Data export**
 	- Select data range for export.
 	- Export to JSON or XML format—the user chooses the output format.
 	- Export includes both raw table data and joined data (e.g., by year).
-	
+
+ 
 - **6. Correlations and visualizations**
 	- Dynamically generate charts of commodity prices against the number of conflicts over the years.
 	- Automatically generate a heatmap of correlations between the number and intensity of conflicts and the prices of selected commodities
 
    <img width="1186" height="677" alt="image" src="https://github.com/user-attachments/assets/d8bea517-a9c6-4fa3-b8f2-b19cb2851e67" />
+   
    <img width="1435" height="567" alt="image" src="https://github.com/user-attachments/assets/54fef23f-b702-4c9a-89dd-b95ca5db1a05" />
 
 
