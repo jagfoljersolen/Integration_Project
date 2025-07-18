@@ -27,11 +27,11 @@ The project integrates data on armed conflicts and commodity prices, offering ad
 
 
 - **2. Commodity dashboard**
+
+  	<img width="1920" height="865" alt="image" src="https://github.com/user-attachments/assets/ffbbb786-251a-4fd0-b294-6333f315dfbc" />
+
 	- List of available commodities (e.g., oil, gas, metals, agricultural products) and visualization of their prices over time.
 	- Dynamic data fetching for the selected commodity for charts and analyses.
-
-
-	<img width="1920" height="865" alt="image" src="https://github.com/user-attachments/assets/ffbbb786-251a-4fd0-b294-6333f315dfbc" />
 
 
 - **3. Conflict dashboard**
