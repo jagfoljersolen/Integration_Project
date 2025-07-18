@@ -17,11 +17,13 @@ The project is based on two datasets:
 The project integrates data on armed conflicts and commodity prices, offering advanced analytical and visualization tools. Key system features include:
 
 - **1. Main dashboard**
+
+  	<img width="1915" height="264" alt="image" src="https://github.com/user-attachments/assets/981e4924-11c3-45b5-b9d4-99e9986105b2" />
+
+
 	- Presents a summary of the number of years with commodity and conflict data, the latest available years, and the historical data range.
 	- Aggregates statistics from both datasets and enables a quick overview of the database status.
 
-
-  	<img width="1915" height="264" alt="image" src="https://github.com/user-attachments/assets/981e4924-11c3-45b5-b9d4-99e9986105b2" />
 
 
 - **2. Commodity dashboard**
